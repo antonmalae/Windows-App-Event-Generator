@@ -1,4 +1,6 @@
 # Windows-App-Event-Generator
+Generate random event with eventid 7777 to Application Windows event log
+
 
 ## Программа записи событий безопасности в журнал Windows
 
