@@ -3,12 +3,31 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"os"
+	"strconv"
 	"time"
 
 	"golang.org/x/sys/windows/svc/eventlog"
 )
 
 func main() {
+	if len(os.Args) < 3 {
+		fmt.Println("Usage: goappsecurityevent <eps> <eventID>")
+		return
+	}
+
+	eps, err := strconv.ParseFloat(os.Args[1], 64)
+	if err != nil {
+		fmt.Printf("Invalid EPS value: %sn", os.Args[1])
+		return
+	}
+
+	eventID, err := strconv.Atoi(os.Args[2])
+	if err != nil {
+		fmt.Printf("Invalid Event ID value: %sn", os.Args[2])
+		return
+	}
+
 	// События безопасности для генерации
 	securityEvents := []string{
 		"Unauthorized access attempt detected",
@@ -30,19 +49,20 @@ func main() {
 	}
 	defer elog.Close()
 
-	fmt.Println("Starting to write security events to log. Press Ctrl+C to stop.")
+	fmt.Printf("Starting to write security events at %v EPS with Event ID %d. Press Ctrl+C to stop.n", eps, eventID)
 
 	for {
 		// Выбираем случайное событие безопасности
 		randomEvent := securityEvents[rand.Intn(len(securityEvents))]
 
-		// Записываем событие в журнал событий Windows
-		err := elog.Info(7777, randomEvent)
+		// Записываем событие в журнал событий Windows с произвольным EventID
+		err := elog.Info(uint32(eventID), randomEvent)
 		if err != nil {
 			fmt.Printf("Failed to write to event log: %sn", err)
-			return // Или используйте continue, чтобы пытаться написать снова после ошибки
+			return
 		}
 
-		time.Sleep(1 * time.Second) // Ожидание 1 секунды перед записью следующего события
+		// Рассчитываем задержку в зависимости от EPS
+		time.Sleep(time.Duration(float64(time.Second) / eps))
 	}
 }
